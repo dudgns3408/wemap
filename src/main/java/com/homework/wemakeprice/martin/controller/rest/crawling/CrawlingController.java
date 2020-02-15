@@ -30,11 +30,15 @@ public class CrawlingController {
             , @RequestParam ExtractionType extractionType
             , @RequestParam @Min(1) int printBundleUnit)
     {
-        String html = crawlingService.getHtml(destinationUrl);
-        String temp = extractionType == ExtractionType.EXCEPT_TAG ? HTMLExtractUtils.removeTag(html) : html;
+        String crawlingHtml = crawlingService.getHtml(destinationUrl);
 
         return ResponseEntity
                 .ok()
-                .body(crawlingService.extractionHtml(temp, printBundleUnit));
+                .body(crawlingService.extractionHtml(
+                        extractionType == ExtractionType.EXCEPT_TAG
+                                ? HTMLExtractUtils.removeTag(crawlingHtml)
+                                : crawlingHtml
+                        , printBundleUnit)
+                );
     }
 }
