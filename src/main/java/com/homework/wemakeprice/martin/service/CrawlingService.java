@@ -1,6 +1,8 @@
 package com.homework.wemakeprice.martin.service;
 
 import com.homework.wemakeprice.martin.controller.rest.crawling.dto.CrawlingResDto;
+import com.homework.wemakeprice.martin.utils.HTMLExtractUtils;
+import com.homework.wemakeprice.martin.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,10 @@ public class CrawlingService {
     private final String HTTP_PROTOCAL_PREFIX = "http";
 
     public CrawlingResDto extractionHtml(String html, int printBundleUnit) {
+        html = StringUtils.removeLineSeparator(html);
+        html = StringUtils.removeSpace(html);
+        html = StringUtils.removeTab(html);
+
         StringBuilder numberLetter = new StringBuilder()
                 , lowercaseLetter = new StringBuilder()
                 , uppercaseLetter = new StringBuilder();
