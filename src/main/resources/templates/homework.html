@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wemakeprice homework page</title>
+</head>
+<body>
+    URL : <input type="text" id="destinationUrl"><br/>
+    TYPE :
+    <select id="extractionType">
+        <option value="EXCEPT_TAG">HTML 태그제외</option>
+        <option value="ALL">TXT 전체</option>
+    </select><br/>
+    출력묶음단위(자연수) : <input type="text" id="printBundleUnit"><br/>
+    <button type="button" id="printBtn">출력</button><br/>
+    몫 : <textarea name="shareArea" id="shareArea" rows="15" cols="200"></textarea><br/>
+    나머지 : <textarea name="remainderArea" id="remainderArea" rows="15" cols="200"></textarea><br/>
+
+    <script type="text/javascript" src="webjars/jquery/3.3.1/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $("#printBtn").click(function () {
+                $.ajax({
+                    url : "http://localhost:8080/api/crawling/url",
+                    type : "GET",
+                    data : {
+                        destinationUrl : $("#destinationUrl").val(),
+                        extractionType : $("#extractionType").val(),
+                        printBundleUnit : $("#printBundleUnit").val()
+                    },
+                    dataType : "JSON",
+                    success: function (data) {
+                        $("#shareArea").val(data.share);
+                        $("#remainderArea").val(data.remainder);
+                    },
+                    error: function (request, status, error){
+                        alert(error);
+                    }
+                })
+            });
+        });
+    </script>
+</body>
+</html>
