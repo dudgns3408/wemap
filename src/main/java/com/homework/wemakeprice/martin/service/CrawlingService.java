@@ -1,7 +1,6 @@
 package com.homework.wemakeprice.martin.service;
 
 import com.homework.wemakeprice.martin.controller.rest.crawling.dto.CrawlingResDto;
-import com.homework.wemakeprice.martin.utils.HTMLExtractUtils;
 import com.homework.wemakeprice.martin.utils.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
@@ -20,24 +19,14 @@ public class CrawlingService {
         html = StringUtils.removeSpace(html);
         html = StringUtils.removeTab(html);
 
-        StringBuilder numberLetter = new StringBuilder()
-                , lowercaseLetter = new StringBuilder()
-                , uppercaseLetter = new StringBuilder();
+        // todo :: 가독성 및 재사용성때문에 함수로 만들었으나, 이로인해 1/3정도의 성능저하가 있음. 속도 문제있을경우 루프한번에 처리하도록 수정 가능
+        String numberLetters = extractionNumber(html)
+                , lowercaseLetters = extractionLetter(html, Character.LOWERCASE_LETTER)
+                , uppercaseLetters = extractionLetter(html, Character.UPPERCASE_LETTER);
 
-
-        for (int i = 0; i < html.length(); i++) {
-            if (Character.isDigit(html.charAt(i))) {
-                numberLetter.append(html.charAt(i));
-            } else if (Character.getType(html.charAt(i)) == Character.LOWERCASE_LETTER) {
-                lowercaseLetter.append(html.charAt(i));
-            } else if (Character.getType(html.charAt(i)) == Character.UPPERCASE_LETTER) {
-                uppercaseLetter.append(html.charAt(i));
-            }
-        }
-
-        char[] numArr = numberLetter.toString().toCharArray();
-        char[] lowercaseArr = lowercaseLetter.toString().toCharArray();
-        char[] uppercaseArr = uppercaseLetter.toString().toCharArray();
+        char[] numArr = numberLetters.toCharArray()
+                , lowercaseArr = lowercaseLetters.toCharArray()
+                , uppercaseArr = uppercaseLetters.toCharArray();
 
         Arrays.sort(numArr);
         Arrays.sort(lowercaseArr);
@@ -45,45 +34,95 @@ public class CrawlingService {
 
         StringBuilder customSortedStrBuilder = new StringBuilder();
 
-        int lowercaseIndex = 0;
-        int uppercaseIndex = 0;
-        int numIndex = 0;
-        int index = 0;
+        int lowercaseIndex = 0
+                , uppercaseIndex = 0
+                , numIndex = 0
+                , index = 0;
 
-        while ( numIndex < numArr.length -1 || lowercaseIndex < lowercaseArr.length - 1 || uppercaseIndex < uppercaseArr.length - 1 ) {
-            if ( index % 2 == 0 ) {
-                if ( uppercaseIndex < uppercaseArr.length && lowercaseIndex < lowercaseArr.length ) {
+        boolean isRemainNum, isRemainLowercase, isRemainUppercase;
 
-                    if (Character.toLowerCase(uppercaseArr[uppercaseIndex]) <= lowercaseArr[lowercaseIndex]) {
-                        customSortedStrBuilder.append(uppercaseArr[uppercaseIndex]);
-                        uppercaseIndex++;
-                    } else {
-                        customSortedStrBuilder.append(lowercaseArr[lowercaseIndex]);
-                        lowercaseIndex++;
-                    }
-                } else if ( !(uppercaseIndex < uppercaseArr.length) && lowercaseIndex < lowercaseArr.length) {
-                    customSortedStrBuilder.append(lowercaseArr[lowercaseIndex]);
-                    lowercaseIndex++;
-                } else if ( uppercaseIndex < uppercaseArr.length && !(lowercaseIndex < lowercaseArr.length)) {
-                    customSortedStrBuilder.append(uppercaseArr[uppercaseIndex]);
-                    uppercaseIndex++;
-                }
+        while ( isRemain(numArr, numIndex)
+                || isRemain(lowercaseArr, lowercaseIndex)
+                || isRemain(uppercaseArr, uppercaseIndex))
+        {
+            isRemainNum = isRemain(numArr, numIndex);
+            isRemainUppercase = isRemain(uppercaseArr, uppercaseIndex);
+            isRemainLowercase = isRemain(lowercaseArr, lowercaseIndex);
+
+            if (isNumberOrder(isRemainNum, index)) {
+                append(customSortedStrBuilder, numArr[numIndex++]);
             } else {
-                if ( numIndex < numArr.length ) {
-                    customSortedStrBuilder.append(numArr[numIndex]);
-                    numIndex++;
+                if (!isRemainUppercase && isRemainLowercase) {
+                    append(customSortedStrBuilder, lowercaseArr[lowercaseIndex++]);
+                    continue;
+                }
+
+                if (!isRemainLowercase && isRemainUppercase) {
+                    append(customSortedStrBuilder, uppercaseArr[uppercaseIndex++]);
+                    continue;
+                }
+
+                if (compareLetter(uppercaseArr[uppercaseIndex], lowercaseArr[lowercaseIndex])) {
+                    append(customSortedStrBuilder, uppercaseArr[uppercaseIndex++]);
+                } else {
+                    append(customSortedStrBuilder, lowercaseArr[lowercaseIndex++]);
                 }
             }
+
             index++;
         }
 
-        int totalLength = customSortedStrBuilder.length();
-        int remainder = totalLength % printBundleUnit;
+        int totalLength = customSortedStrBuilder.length()
+                , boundaryValue = totalLength - totalLength % printBundleUnit;
 
         return CrawlingResDto.builder()
-                .remainder(customSortedStrBuilder.substring(totalLength - remainder))
-                .share(customSortedStrBuilder.substring(0, totalLength - remainder))
+                .remainder(customSortedStrBuilder.substring(boundaryValue))
+                .share(customSortedStrBuilder.substring(0, boundaryValue))
                 .build();
+    }
+
+    private boolean compareLetter(char c1, char c2) {
+        return Character.toLowerCase(c1) <= c2;
+    }
+
+    private void append(StringBuilder stringBuilder, char c) {
+        stringBuilder.append(c);
+    }
+
+    private boolean isNumberOrder(boolean isRemainNum, int index) {
+        return isRemainNum && index % 2 == 1;
+    }
+
+    private boolean isRemain(char[] arr, int index) {
+        return index < arr.length - 1;
+    }
+
+    private String extractionLetter(String html, byte type) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        char c;
+        for (int i = 0; i < html.length(); i++) {
+            c = html.charAt(i);
+            if (Character.getType(c) == type) {
+                stringBuilder.append(c);
+            }
+        }
+
+        return stringBuilder.toString();
+    }
+
+    private String extractionNumber(String html) {
+        StringBuilder stringBuilder = new StringBuilder();
+
+        char c;
+        for (int i = 0; i < html.length(); i++) {
+            c = html.charAt(i);
+            if (Character.isDigit(c)) {
+                stringBuilder.append(c);
+            }
+        }
+
+        return stringBuilder.toString();
     }
 
     public String getHtml(String destinationUrl) {
