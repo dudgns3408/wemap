@@ -125,16 +125,12 @@ public class CrawlingService {
         return stringBuilder.toString();
     }
 
-    public String getHtml(String destinationUrl) {
+    public String getHtml(String destinationUrl) throws IOException {
         String html = null;
 
         destinationUrl = destinationUrl.contains(HTTP_PROTOCAL_PREFIX)
                 ? destinationUrl : "https://" + destinationUrl;
-        try {
-            html = Jsoup.connect(destinationUrl).get().toString();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        html = Jsoup.connect(destinationUrl).get().toString();
 
         return html;
     }

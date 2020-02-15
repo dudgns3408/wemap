@@ -30,11 +30,11 @@
                     },
                     dataType : "JSON",
                     success: function (data) {
-                        $("#shareArea").val(data.share);
-                        $("#remainderArea").val(data.remainder);
+                        $("#shareArea").val(data.result.share);
+                        $("#remainderArea").val(data.result.remainder);
                     },
                     error: function (request, status, error){
-                        alert(error);
+                        alert(request.responseJSON.message);
                     }
                 })
             });

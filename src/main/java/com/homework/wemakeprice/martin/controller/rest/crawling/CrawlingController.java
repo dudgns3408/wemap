@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
+import java.io.IOException;
 
 @Validated
 @RestController
@@ -28,8 +29,7 @@ public class CrawlingController {
     public ResponseEntity<CrawlingResDto> crawlingUrl(
             @RequestParam @NotEmpty String destinationUrl
             , @RequestParam ExtractionType extractionType
-            , @RequestParam @Min(1) int printBundleUnit)
-    {
+            , @RequestParam @Min(1) int printBundleUnit) throws IOException {
         String crawlingHtml = crawlingService.getHtml(destinationUrl);
 
         return ResponseEntity
